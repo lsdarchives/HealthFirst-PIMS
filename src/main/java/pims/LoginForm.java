@@ -6,15 +6,15 @@ import java.sql.*;
 public class LoginForm {
 
     private JPanel jPanel;
-    
     private JTextField txtUsername;
+    private JLabel lblUsername;
+    private JLabel lblPassword;
     private JPasswordField txtPass;
     private JButton loginBtn;
     private JLabel lblStatus;
-    private JLabel lblUsername;
-    private JLabel lblPassword;
+    private JLabel lblSubtitle;
     private JLabel lblTitle;
-    
+
     public LoginForm(){
         loginBtn.addActionListener(e -> login());
     }
@@ -23,8 +23,18 @@ public class LoginForm {
         return jPanel;
     }
 
-    private void login() {
+    public void showLogin(){
+        JFrame frame = new JFrame("HealthFirst Pharmacy");
 
+        frame.setContentPane(this.jPanel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 400);
+        frame.setLocationRelativeTo(null);
+
+        frame.setVisible(true);
+    }
+
+    private void login() {
         String username = txtUsername.getText();
         String password = new String(txtPass.getPassword());
 
