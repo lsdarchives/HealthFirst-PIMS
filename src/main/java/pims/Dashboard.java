@@ -1,83 +1,144 @@
 package pims;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
 
 public class Dashboard {
-    // =========================================================
+
     // 1. CLASS VARIABLES
-    // =========================================================
     private JFrame frame;
 
-    // =========================================================
     // 2. HEALTH-FIRST COLOUR PALETTE
-    // =========================================================
-    private static final Color PRIMARY_GREEN = new Color(25, 135, 84);
-    private static final Color DARK_GREEN = new Color(20, 108, 67);
-    private static final Color LIGHT_GREEN = new Color(240, 248, 243);
-    private static final Color SOFT_GREEN = new Color(220, 239, 229);
+    static final Color PRIMARY_GREEN = new Color(25, 135, 84);
+    static final Color DARK_GREEN = new Color(20, 108, 67);
+    static final Color LIGHT_GREEN = new Color(240, 248, 243);
+    static final Color SOFT_GREEN = new Color(220, 239, 229);
 
-    private static final Color WHITE = Color.WHITE;
-    private static final Color DARK_TEXT = new Color(31, 41, 55);
-    private static final Color GREY_TEXT = new Color(107, 114, 128);
-    private static final Color BORDER = new Color(217, 231, 223);
+    static final Color WHITE = Color.WHITE;
+    static final Color DARK_TEXT = new Color(31, 41, 55);
+    static final Color GREY_TEXT = new Color(107, 114, 128);
+    static final Color BORDER = new Color(217, 231, 223);
 
-    // =========================================================
     // 3. CONSTRUCTOR / DASHBOARD SETUP
-    // =========================================================
     public Dashboard(String username, String role) {
-        // =====================================================
-        // CREATE THE WINDOW
-        // =====================================================
+
+        // CREATE WINDOW
         frame = new JFrame("HealthFirst Pharmacy");
+
         frame.setSize(1000, 650);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
 
-        // =====================================================
+        // CREATE MANAGEMENT MODULES
+        SupplierManagement supplierManagement = new SupplierManagement(frame);
+        MedicineManagement medicineManagement = new MedicineManagement(frame);
+        UserManagement userManagement = new UserManagement(frame);
+        PointOfSale pointOfSale = new PointOfSale(frame, username);
+        SalesReport salesReport = new SalesReport(frame);
+        ExpiryReport expiryReport = new ExpiryReport(frame);
+
         // MAIN PANEL
-        // =====================================================
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(LIGHT_GREEN);
 
-        // =====================================================
-        // TOP HEADER
-        // =====================================================
+        // PAGE CONTENT AREA
+        final JPanel pagePanel = new JPanel(new BorderLayout());
+        pagePanel.setBackground(LIGHT_GREEN);
+        pagePanel.add(createDashboardContent(), BorderLayout.CENTER);
+
+        // HEADER
+        JPanel header = createHeader(username, role);
+
+        // SIDEBAR
+        JPanel sidebar = createSidebar(
+                role,
+                username,
+                pagePanel,
+                supplierManagement,
+                medicineManagement,
+                userManagement,
+                pointOfSale,
+                salesReport,
+                expiryReport
+        );
+
+        // MAIN CONTENT
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(LIGHT_GREEN);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
+
+        // WELCOME MESSAGE
+        JPanel welcomePanel = createWelcomePanel(username);
+
+        contentPanel.add(welcomePanel, BorderLayout.NORTH);
+
+        contentPanel.add(pagePanel, BorderLayout.CENTER);
+
+        // ADD EVERYTHING TO MAIN PANEL
+        mainPanel.add(header, BorderLayout.NORTH);
+        mainPanel.add(sidebar, BorderLayout.WEST);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
+
+        // SHOW WINDOW
+        frame.add(mainPanel);
+        frame.setVisible(true);
+    }
+
+    // 4. HEADER
+    private JPanel createHeader(String username, String role) {
+
         JPanel header = new JPanel(new BorderLayout());
+
         header.setBackground(WHITE);
         header.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),BorderFactory.createEmptyBorder(16, 25, 16, 25)));
 
         // Application title
         JLabel titleLabel = new JLabel("HealthFirst Pharmacy");
+
         titleLabel.setFont(new Font("Arial", Font.BOLD, 22));
         titleLabel.setForeground(PRIMARY_GREEN);
 
         // Application subtitle
         JLabel subtitleLabel = new JLabel("Pharmacy Inventory Management System");
+
         subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 13));
         subtitleLabel.setForeground(GREY_TEXT);
 
         // Title panel
         JPanel titlePanel = new JPanel();
+
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
         titlePanel.setBackground(WHITE);
+
         titlePanel.add(titleLabel);
         titlePanel.add(Box.createVerticalStrut(3));
         titlePanel.add(subtitleLabel);
 
         // Logged-in user
         JLabel userLabel = new JLabel(username + "  |  " + role);
+
         userLabel.setFont(new Font("Arial", Font.BOLD, 14));
         userLabel.setForeground(DARK_TEXT);
 
         header.add(titlePanel, BorderLayout.WEST);
         header.add(userLabel, BorderLayout.EAST);
 
-        // =====================================================
-        // SIDEBAR
-        // =====================================================
+        return header;
+    }
+
+    // 5. SIDEBAR
+    private JPanel createSidebar(
+            String role,
+            String username,
+            JPanel pagePanel,
+            SupplierManagement supplierManagement,
+            MedicineManagement medicineManagement,
+            UserManagement userManagement,
+            PointOfSale pointOfSale,
+            SalesReport salesReport,
+            ExpiryReport expiryReport) {
+
         JPanel sidebar = new JPanel();
 
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
@@ -85,18 +146,19 @@ public class Dashboard {
         sidebar.setBackground(WHITE);
         sidebar.setBorder(BorderFactory.createEmptyBorder(25, 15, 20, 15));
 
-        // =====================================================
         // SIDEBAR LOGO
-        // =====================================================
         JLabel logo = new JLabel("HEALTHFIRST");
+
         logo.setFont(new Font("Arial", Font.BOLD, 21));
         logo.setForeground(PRIMARY_GREEN);
 
         JLabel pharmacyLabel = new JLabel("PHARMACY");
+
         pharmacyLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         pharmacyLabel.setForeground(GREY_TEXT);
 
         JLabel menuLabel = new JLabel("MENU");
+
         menuLabel.setFont(new Font("Arial", Font.BOLD, 12));
         menuLabel.setForeground(GREY_TEXT);
 
@@ -106,9 +168,7 @@ public class Dashboard {
         sidebar.add(menuLabel);
         sidebar.add(Box.createVerticalStrut(12));
 
-        // =====================================================
         // SIDEBAR BUTTONS
-        // =====================================================
         JButton dashboardButton = new JButton("Dashboard");
         JButton usersButton = new JButton("Manage Users");
         JButton suppliersButton = new JButton("Manage Suppliers");
@@ -117,22 +177,7 @@ public class Dashboard {
         JButton reportsButton = new JButton("Reports");
         JButton logoutButton = new JButton("Logout");
 
-        // =====================================================
-        // LOGOUT BUTTON
-        // =====================================================
-        logoutButton.addActionListener(e -> {
-            int choice = JOptionPane.showConfirmDialog(frame, "Are you sure you want to logout?", "Logout", JOptionPane.YES_NO_OPTION);
-
-            if (choice == JOptionPane.YES_OPTION) {
-                frame.dispose();
-                LoginForm loginForm = new LoginForm();
-                loginForm.showLogin();
-            }
-        });
-
-        // =====================================================
         // STYLE SIDEBAR BUTTONS
-        // =====================================================
         JButton[] menuButtons = {
                 dashboardButton,
                 usersButton,
@@ -143,7 +188,9 @@ public class Dashboard {
                 logoutButton
         };
 
-        for (JButton button : menuButtons) {button.setFont(new Font("Arial", Font.PLAIN, 14));
+        for (JButton button : menuButtons) {
+
+            button.setFont(new Font("Arial", Font.PLAIN, 14));
             button.setFocusPainted(false);
             button.setBorderPainted(false);
             button.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -153,66 +200,115 @@ public class Dashboard {
             button.setOpaque(true);
         }
 
-        // Highlight Dashboard
+        // HIGHLIGHT DASHBOARD
         dashboardButton.setBackground(SOFT_GREEN);
         dashboardButton.setForeground(PRIMARY_GREEN);
         dashboardButton.setFont(new Font("Arial", Font.BOLD, 14));
 
-        // =====================================================
-        // SAME SIZE FOR ALL BUTTONS
-        // =====================================================
+        // BUTTON SIZE
         Dimension buttonSize = new Dimension(190, 38);
 
         for (JButton button : menuButtons) {
+
             button.setPreferredSize(buttonSize);
             button.setMinimumSize(buttonSize);
             button.setMaximumSize(buttonSize);
         }
 
-        // =====================================================
         // ROLE-BASED MENU
-        // =====================================================
         sidebar.add(dashboardButton);
         sidebar.add(Box.createVerticalStrut(6));
 
         // Admin menu
         if (role.equalsIgnoreCase("Admin")) {
+
             sidebar.add(usersButton);
             sidebar.add(Box.createVerticalStrut(6));
+
             sidebar.add(suppliersButton);
             sidebar.add(Box.createVerticalStrut(6));
+
             sidebar.add(medicinesButton);
             sidebar.add(Box.createVerticalStrut(6));
+
             sidebar.add(salesButton);
             sidebar.add(Box.createVerticalStrut(6));
+
             sidebar.add(reportsButton);
+
         } else {
+
             // Cashier menu
             sidebar.add(medicinesButton);
             sidebar.add(Box.createVerticalStrut(6));
             sidebar.add(salesButton);
         }
 
-        // Push Logout to bottom
+        // LOGOUT
         sidebar.add(Box.createVerticalGlue());
         sidebar.add(logoutButton);
 
-        // =====================================================
-        // MAIN CONTENT AREA
-        // =====================================================
-        final JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(LIGHT_GREEN);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
+        // DASHBOARD NAVIGATION
+        dashboardButton.addActionListener(e -> {
+            showContent(pagePanel, createDashboardContent());
+        });
 
-        // =====================================================
-        // WELCOME MESSAGE
-        // =====================================================
+        // USER MANAGEMENT NAVIGATION
+        usersButton.addActionListener(e -> {
+            showContent(pagePanel, userManagement.createUserPanel("USER MANAGEMENT","Manage pharmacy system users here."));
+        });
+
+        // SUPPLIER MANAGEMENT NAVIGATION
+        suppliersButton.addActionListener(e -> {
+            showContent(pagePanel, supplierManagement.createSupplierPanel("SUPPLIER MANAGEMENT", "Manage pharmacy suppliers here."));
+        });
+
+        // MEDICINE MANAGEMENT NAVIGATION
+        medicinesButton.addActionListener(e -> {
+            showContent(pagePanel, medicineManagement.createMedicinePanel("MEDICINE MANAGEMENT", "Manage medicines and inventory here."));
+        });
+
+        // POINT OF SALE NAVIGATION
+        salesButton.addActionListener(e -> {
+            showContent(pagePanel, pointOfSale.createSalesPanel("PROCESS SALE", "Process pharmacy sales here."));
+        });
+
+        // REPORTS NAVIGATION
+        reportsButton.addActionListener(e -> {
+            showContent(pagePanel, createReportsPanel(pagePanel, salesReport, expiryReport));
+        });
+
+        // LOGOUT NAVIGATION
+        logoutButton.addActionListener(e -> {
+            int choice = JOptionPane.showConfirmDialog(
+                    frame,
+                    "Are you sure you want to logout?",
+                    "Logout",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+
+                frame.dispose();
+
+                LoginForm loginForm = new LoginForm();
+                loginForm.showLogin();
+            }
+        });
+
+        return sidebar;
+    }
+
+    // 6. WELCOME PANEL
+    private JPanel createWelcomePanel(String username) {
+
         JLabel welcomeLabel = new JLabel("Welcome back, " + username);
 
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 26));
         welcomeLabel.setForeground(DARK_TEXT);
 
         JLabel descriptionLabel = new JLabel("Here's your pharmacy overview.");
+
         descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 15));
         descriptionLabel.setForeground(GREY_TEXT);
 
@@ -225,112 +321,56 @@ public class Dashboard {
         welcomePanel.add(Box.createVerticalStrut(4));
         welcomePanel.add(descriptionLabel);
 
-        contentPanel.add(welcomePanel, BorderLayout.NORTH);
-
-        // =====================================================
-        // PAGE CONTENT AREA
-        // =====================================================
-        final JPanel pagePanel = new JPanel(new BorderLayout());
-
-        pagePanel.setBackground(LIGHT_GREEN);
-        pagePanel.add(createDashboardContent(), BorderLayout.CENTER);
-        contentPanel.add(pagePanel, BorderLayout.CENTER);
-
-        // =====================================================
-        // SIDEBAR BUTTON ACTIONS / NAVIGATION
-        // =====================================================
-
-        // Dashboard
-        dashboardButton.addActionListener(e -> {
-            showContent(pagePanel, createDashboardContent());
-        });
-
-        // Manage Users
-        usersButton.addActionListener(e -> {
-            showContent(pagePanel, createPlaceholderPanel("USER MANAGEMENT","Manage pharmacy system users here."));
-        });
-
-        // Manage Suppliers
-        suppliersButton.addActionListener(e -> {
-            showContent(pagePanel, createSupplierPanel("SUPPLIER MANAGEMENT", "Manage pharmacy suppliers here."));
-        });
-
-        // Manage Medicines
-        medicinesButton.addActionListener(e -> {
-            showContent(pagePanel, createMedicinePanel("MEDICINE MANAGEMENT", "Manage medicines and inventory here."));
-        });
-
-        // Process Sale
-        salesButton.addActionListener(e -> {
-            showContent(pagePanel, createPlaceholderPanel("PROCESS SALE", "Process pharmacy sales here."));
-        });
-
-        // Reports
-        reportsButton.addActionListener(e -> {
-            showContent(pagePanel, createPlaceholderPanel("REPORTS", "View pharmacy reports here."));
-        });
-
-        // =====================================================
-        // ADD EVERYTHING TO MAIN PANEL
-        // =====================================================
-        mainPanel.add(
-                header,
-                BorderLayout.NORTH
-        );
-
-        mainPanel.add(
-                sidebar,
-                BorderLayout.WEST
-        );
-
-        mainPanel.add(
-                contentPanel,
-                BorderLayout.CENTER
-        );
-
-        // =====================================================
-        // PUT MAIN PANEL INSIDE WINDOW
-        // =====================================================
-
-        frame.add(mainPanel);
-
-        // Show dashboard
-        frame.setVisible(true);
+        return welcomePanel;
     }
 
-    // =========================================================
-    // 4. DASHBOARD CONTENT METHODS
-    // =========================================================
-
-    // ---------------------------------------------------------
-    // CREATE DASHBOARD CONTENT
-    // ---------------------------------------------------------
+    // 7. DASHBOARD CONTENT
     private JPanel createDashboardContent() {
 
         JPanel dashboardContent = new JPanel();
 
-        dashboardContent.setLayout(new BoxLayout(dashboardContent, BoxLayout.Y_AXIS));
+        dashboardContent.setLayout(
+                new BoxLayout(
+                        dashboardContent,
+                        BoxLayout.Y_AXIS
+                )
+        );
+
         dashboardContent.setBackground(LIGHT_GREEN);
 
-        // =====================================================
         // STATISTICS CARDS
-        // =====================================================
-        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 16, 0));
+        JPanel statsPanel = new JPanel(
+                new GridLayout(1, 3, 16, 0)
+        );
 
         statsPanel.setBackground(LIGHT_GREEN);
 
-        JPanel medicinesCard = createStatCard("MEDICINES", String.valueOf(getCount("medicines")), PRIMARY_GREEN);
-        JPanel salesCard = createStatCard("TOTAL SALES", String.format("R%.2f", getTotalSales()), PRIMARY_GREEN);
-        JPanel suppliersCard = createStatCard("SUPPLIERS", String.valueOf(getCount("suppliers")), PRIMARY_GREEN);
+        JPanel medicinesCard = createStatCard(
+                "MEDICINES",
+                String.valueOf(getCount("medicines")),
+                PRIMARY_GREEN
+        );
+
+        JPanel salesCard = createStatCard(
+                "TOTAL SALES",
+                String.format("R%.2f", getTodaySales()),
+                PRIMARY_GREEN
+        );
+
+        JPanel suppliersCard = createStatCard(
+                "SUPPLIERS",
+                String.valueOf(getCount("suppliers")),
+                PRIMARY_GREEN
+        );
 
         statsPanel.add(medicinesCard);
         statsPanel.add(salesCard);
         statsPanel.add(suppliersCard);
 
-        // =====================================================
         // ANALYTICS PANEL
-        // =====================================================
-        JPanel analyticsPanel = new JPanel(new BorderLayout());
+        JPanel analyticsPanel = new JPanel(
+                new BorderLayout()
+        );
 
         analyticsPanel.setBackground(WHITE);
         analyticsPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER), BorderFactory.createEmptyBorder(
@@ -338,7 +378,9 @@ public class Dashboard {
                 )
         );
 
-        JLabel analyticsTitle = new JLabel("SALES / INVENTORY ANALYTICS");
+        JLabel analyticsTitle = new JLabel(
+                "SALES / INVENTORY ANALYTICS"
+        );
 
         analyticsTitle.setFont(new Font("Arial", Font.BOLD, 16));
         analyticsTitle.setForeground(DARK_TEXT);
@@ -348,42 +390,20 @@ public class Dashboard {
                 BorderLayout.NORTH
         );
 
-        // =====================================================
         // ANALYTICS INFORMATION
-        // =====================================================
-
         JPanel analyticsInfo = new JPanel(new GridLayout(2, 2, 20, 15));
 
         analyticsInfo.setBackground(WHITE);
         analyticsInfo.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
 
-        analyticsInfo.add(new JLabel(
-                "Inventory Status: "
-                        + getCount("medicines")
-                        + " Medicines"));
+        analyticsInfo.add(new JLabel("Inventory Status: " + getCount("medicines") + " Medicines"));
+        analyticsInfo.add(new JLabel("Today's Sales: R" + String.format("%.2f", getTotalSales())));
+        analyticsInfo.add(new JLabel("Low Stock Items: " + getLowStockCount()));
+        analyticsInfo.add(new JLabel("Active Suppliers: " + getCount("suppliers")));
 
-        analyticsInfo.add(new JLabel(
-                "Today's Sales: R"
-                        + String.format(
-                                "%.2f",
-                        getTotalSales())));
+        analyticsPanel.add(analyticsInfo, BorderLayout.CENTER);
 
-        analyticsInfo.add(new JLabel(
-                "Low Stock Items: "
-                        + getLowStockCount()));
-
-        analyticsInfo.add(new JLabel(
-                "Active Suppliers: "
-                        + getCount("suppliers")));
-
-        analyticsPanel.add(
-                analyticsInfo,
-                BorderLayout.CENTER
-        );
-
-        // =====================================================
         // ADD DASHBOARD SECTIONS
-        // =====================================================
         dashboardContent.add(statsPanel);
         dashboardContent.add(Box.createVerticalStrut(20));
         dashboardContent.add(analyticsPanel);
@@ -391,19 +411,13 @@ public class Dashboard {
         return dashboardContent;
     }
 
-    // ---------------------------------------------------------
-    // CREATE STAT CARD
-    // ---------------------------------------------------------
-    private JPanel createStatCard(String title, String value, Color valueColor){
+    // 8. CREATE STAT CARD
+    private JPanel createStatCard(String title, String value, Color valueColor) {
         JPanel card = new JPanel();
 
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER), BorderFactory.createEmptyBorder(
-                15,
-                18,
-                15,
-                18)));
+        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER), BorderFactory.createEmptyBorder(15, 18, 15, 18)));
 
         JLabel titleLabel = new JLabel(title);
 
@@ -422,857 +436,73 @@ public class Dashboard {
         return card;
     }
 
-    // =========================================================
-    // PHASE 6 - MEDICINE MANAGEMENT METHODS
-    // =========================================================
-
-    // ---------------------------------------------------------
-    // CREATE MEDICINE MANAGEMENT PANEL
-    // ---------------------------------------------------------
-    private JPanel createMedicinePanel(String title, String description){
-        JPanel panel = new JPanel(new BorderLayout());
+    // 9. REPORTS PAGE
+    private JPanel createReportsPanel(JPanel pagePanel, SalesReport salesReport, ExpiryReport expiryReport) {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
 
         panel.setBackground(LIGHT_GREEN);
-        panel.setBorder(BorderFactory.createEmptyBorder(
-                10,
-                10,
-                10,
-                10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // =====================================================
-        // PAGE HEADER
-        // =====================================================
+        // REPORT HEADER
+        JLabel titleLabel = new JLabel("REPORTS");
+
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(DARK_TEXT);
+
+        JLabel descriptionLabel = new JLabel("View pharmacy sales and medicine expiry reports.");
+
+        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 15));
+        descriptionLabel.setForeground(GREY_TEXT);
+
         JPanel headerPanel = new JPanel();
 
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setBackground(LIGHT_GREEN);
 
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(DARK_TEXT);
-
-        JLabel descriptionLabel = new JLabel(description);
-        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 15));
-        descriptionLabel.setForeground(GREY_TEXT);
-
         headerPanel.add(titleLabel);
         headerPanel.add(Box.createVerticalStrut(5));
         headerPanel.add(descriptionLabel);
 
-        // search panel on the header
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-        topPanel.setBackground(LIGHT_GREEN);
+        panel.add(headerPanel, BorderLayout.NORTH);
 
-        topPanel.add(headerPanel);
+        // REPORT BUTTONS
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 20));
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.setBackground(LIGHT_GREEN);
-
-        JLabel searchLabel = new JLabel("Search:");
-        JTextField searchField = new JTextField(20);
-        JButton searchButton = new JButton("Search");
-        JButton showAllButton = new JButton("Show All");
-
-        searchPanel.add(searchLabel);
-        searchPanel.add(searchField);
-        searchPanel.add(searchButton);
-        searchPanel.add(showAllButton);
-
-        topPanel.add(searchPanel);
-
-        panel.add(topPanel, BorderLayout.NORTH);
-
-        // =====================================================
-        // MEDICINE TABLE
-        // =====================================================
-        String[] columns = {
-                "ID",
-                "Medicine Name",
-                "Category",
-                "Supplier",
-                "Quantity",
-                "Price",
-                "Expiry Date",
-                "Reorder Level"
-        };
-
-        DefaultTableModel tableModel = new DefaultTableModel(columns, 0);
-        JTable medicineTable = new JTable(tableModel);
-        loadMedicinesTable(tableModel);
-
-        // Search
-        searchButton.addActionListener(e -> {
-            searchMeds(searchField.getText(), tableModel);
-        });
-
-        // Show all
-        showAllButton.addActionListener(e -> {
-            tableModel.setRowCount(0);
-            loadMedicinesTable(tableModel);
-        });
-
-        medicineTable.setRowHeight(30);
-        medicineTable.setFont(new Font("Arial", Font.PLAIN, 13));
-        medicineTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        medicineTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        medicineTable.setFillsViewportHeight(true);
-
-        // Low stock highlighter
-        medicineTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-                int quantity = Integer.parseInt(table.getValueAt(row, 4).toString());
-                int reorderLevel = Integer.parseInt(table.getValueAt(row, 7).toString());
-
-                if (!isSelected && quantity <= reorderLevel) {
-                    component.setBackground(new Color(255, 235, 235));
-                    component.setForeground(Color.RED);
-                } else if (!isSelected) {
-                    component.setBackground(Color.WHITE);
-                    component.setForeground(DARK_TEXT);
-                }
-
-                return component;
-            }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(medicineTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER));
-
-        // =====================================================
-        // MEDICINE BUTTONS
-        // =====================================================
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setBackground(LIGHT_GREEN);
 
-        JButton addButton = new JButton("Add Medicine");
-        JButton editButton = new JButton("Edit Medicine");
-        JButton deleteButton = new JButton("Delete Medicine");
+        JButton salesReportButton = new JButton("Sales Report");
+        JButton expiryReportButton = new JButton("Expiry Report");
 
-        buttonPanel.add(addButton);
-        buttonPanel.add(editButton);
-        buttonPanel.add(deleteButton);
+        buttonPanel.add(salesReportButton);
+        buttonPanel.add(expiryReportButton);
 
-        addButton.addActionListener(e -> {
-            addMedicine(tableModel);
+        panel.add(buttonPanel, BorderLayout.CENTER);
+
+        // SALES REPORT BUTTON
+        salesReportButton.addActionListener(e -> {
+            showContent(pagePanel, salesReport.createSalesReportPanel(
+                            "SALES REPORT",
+                            "View completed pharmacy sales."
+            ));
         });
 
-        editButton.addActionListener(e -> {
-            editMedicine(medicineTable, tableModel);
+        // EXPIRY REPORT BUTTON
+        expiryReportButton.addActionListener(e -> {
+            showContent(pagePanel, expiryReport.createExpiryReportPanel(
+                            "EXPIRY REPORT",
+                            "Medicines expiring within the next one month."
+            ));
         });
-
-        deleteButton.addActionListener(e -> {
-            deleteMedicine(medicineTable, tableModel);
-        });
-
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
         return panel;
     }
 
-    // ---------------------------------------------------------
-    // ADD MEDICINE
-    // ---------------------------------------------------------
-    private void addMedicine(DefaultTableModel tableModel) {
-        JTextField name = new JTextField();
-        JTextField category= new JTextField();
-        JTextField quantity = new JTextField();
-        JTextField price = new JTextField();
-        JTextField expiry = new JTextField();
-        JTextField reorder = new JTextField();
+    // 10. PLACEHOLDER PAGE
+    private JPanel createPlaceholderPanel(String title, String description) {
 
-        JComboBox<String> supplierDropDown = new JComboBox<>();
-        loadSuppliersDropdown(supplierDropDown);
-
-        JPanel formPanel = new JPanel(new GridLayout(7, 2, 10, 10));
-
-        formPanel.add(new JLabel("Medicine Name:"));
-        formPanel.add(name);
-
-        formPanel.add(new JLabel("Category:"));
-        formPanel.add(category);
-
-        formPanel.add(new JLabel("Supplier:"));
-        formPanel.add(supplierDropDown);
-
-        formPanel.add(new JLabel("Quantity:"));
-        formPanel.add(quantity);
-
-        formPanel.add(new JLabel("Price:"));
-        formPanel.add(price);
-
-        formPanel.add(new JLabel("Expiry Date (YYYY-MM-DD):"));
-        formPanel.add(expiry);
-
-        formPanel.add(new JLabel("Reorder Level:"));
-        formPanel.add(reorder);
-
-        int result = JOptionPane.showConfirmDialog(
-                frame,
-                formPanel,
-                "Add Medicine",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-        );
-
-        if (result == JOptionPane.OK_OPTION) {
-            String sql = "INSERT INTO medicines (medicine_name, category, supplier_id, quantity, price, expiry_date, reorder_level) VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-            try (Connection connection = DatabaseConnection.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sql)){
-                statement.setString(1, name.getText());
-                statement.setString(2, category.getText());
-
-                String selectedSupplier = (String) supplierDropDown.getSelectedItem();
-                int supplierId = Integer.parseInt(selectedSupplier.split(" - ")[0]);
-                statement.setInt(3, supplierId);
-
-                statement.setInt(4, Integer.parseInt(quantity.getText()));
-                statement.setDouble(5, Double.parseDouble(price.getText()));
-                statement.setDate(6, Date.valueOf(expiry.getText()));
-                statement.setInt(7, Integer.parseInt(reorder.getText()));
-
-                statement.executeUpdate();
-
-                JOptionPane.showMessageDialog(frame, "Medicine added successfully.");
-
-                tableModel.setRowCount(0);
-                loadMedicinesTable(tableModel);
-
-            } catch (SQLException | NumberFormatException e) {
-                JOptionPane.showMessageDialog(frame, "Could not add medicine.\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    // ---------------------------------------------------------
-    // EDIT MEDICINE
-    // ---------------------------------------------------------
-    private void editMedicine(JTable medicineTable, DefaultTableModel tableModel) {
-        int selectedRow = medicineTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(frame, "Please select a medicine to edit.");
-            return;
-        }
-
-        int medicineId = (int) tableModel.getValueAt(selectedRow, 0);
-        int currSupplierId = getSupplierForMeds(medicineId);
-
-        JTextField nameField = new JTextField(tableModel.getValueAt(selectedRow, 1).toString());
-        JTextField categoryField = new JTextField(tableModel.getValueAt(selectedRow, 2).toString());
-
-        // Dropdown
-        JComboBox<String> supplierDropDown = new JComboBox<>();
-        loadSuppliersDropdown(supplierDropDown);
-
-        // Select current supplier
-        for (int i = 0; i < supplierDropDown.getItemCount(); i++) {
-            String supplierItem = supplierDropDown.getItemAt(i);
-
-            if (supplierItem.startsWith(currSupplierId + " - ")) {
-                supplierDropDown.setSelectedIndex(i);
-                break;
-            }
-        }
-
-        JTextField quantityField = new JTextField(tableModel.getValueAt(selectedRow, 3).toString());
-        JTextField priceField = new JTextField(tableModel.getValueAt(selectedRow, 4).toString());
-        JTextField expiryField = new JTextField(tableModel.getValueAt(selectedRow, 5).toString());
-        JTextField reorderField = new JTextField(tableModel.getValueAt(selectedRow, 6).toString());
-
-        JPanel formPanel = new JPanel(new GridLayout(7, 2, 10, 10));
-
-        formPanel.add(new JLabel("Medicine Name:"));
-        formPanel.add(nameField);
-
-        formPanel.add(new JLabel("Category:"));
-        formPanel.add(categoryField);
-
-        formPanel.add(new JLabel("Supplier:"));
-        formPanel.add(supplierDropDown);
-
-        formPanel.add(new JLabel("Quantity:"));
-        formPanel.add(quantityField);
-
-        formPanel.add(new JLabel("Price:"));
-        formPanel.add(priceField);
-
-        formPanel.add(new JLabel("Expiry Date (YYYY-MM-DD):"));
-        formPanel.add(expiryField);
-
-        formPanel.add(new JLabel("Reorder Level:"));
-        formPanel.add(reorderField);
-
-        int result = JOptionPane.showConfirmDialog(
-                frame,
-                formPanel,
-                "Edit Medicine",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-        );
-
-        if (result == JOptionPane.OK_OPTION) {
-            String sql = "UPDATE medicines SET medicine_name = ?, category = ?, supplier_id = ?, quantity = ?, price = ?, expiry_date = ?, reorder_level = ? WHERE medicine_id = ?";
-
-            try (Connection connection = DatabaseConnection.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sql)){
-                statement.setString(1, nameField.getText());
-                statement.setString(2, categoryField.getText());
-
-                String selectedSupplier = (String) supplierDropDown.getSelectedItem();
-                int supplierId = Integer.parseInt(selectedSupplier.split(" - ")[0]);
-
-                statement.setInt(3, supplierId);
-                statement.setInt(4, Integer.parseInt(quantityField.getText()));
-                statement.setDouble(5, Double.parseDouble(priceField.getText()));
-                statement.setDate(6, Date.valueOf(expiryField.getText()));
-                statement.setInt(7, Integer.parseInt(reorderField.getText()));
-                statement.setInt(8, medicineId);
-
-                statement.executeUpdate();
-
-                JOptionPane.showMessageDialog(frame, "Medicine updated successfully.");
-
-                tableModel.setRowCount(0);
-                loadMedicinesTable(tableModel);
-
-            } catch (SQLException | NumberFormatException e) {
-                JOptionPane.showMessageDialog(frame, "Could not update medicine.\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    // ---------------------------------------------------------
-    // DELETE MEDICINE
-    // ---------------------------------------------------------
-    private void deleteMedicine(JTable medicineTable, DefaultTableModel tableModel) {
-        int selectedRow = medicineTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(frame, "Please select a medicine to delete.");
-            return;
-        }
-
-        int medicineId = (int) tableModel.getValueAt(selectedRow, 0);
-        String medicineName = tableModel.getValueAt(selectedRow, 1).toString();
-
-        int choice = JOptionPane.showConfirmDialog(
-                frame,
-                "Are you sure you want to delete " + medicineName + "?",
-                "Delete Medicine",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        if (choice == JOptionPane.YES_OPTION) {
-            String sql = "DELETE FROM medicines WHERE medicine_id = ?";
-
-            try (Connection connection = DatabaseConnection.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sql)){
-                statement.setInt(1, medicineId);
-                statement.executeUpdate();
-
-                JOptionPane.showMessageDialog(frame, "Medicine deleted successfully.");
-
-                tableModel.setRowCount(0);
-                loadMedicinesTable(tableModel);
-
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(frame, "Could not delete medicine.\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    // ---------------------------------------------------------
-    // LOAD MEDICINES TABLE
-    // ---------------------------------------------------------
-    private void loadMedicinesTable(DefaultTableModel tableModel) {
-        String sql = "SELECT m.medicine_id, m.medicine_name, m.category, s.supplier_name, m.quantity, m.price, m.expiry_date, m.reorder_level FROM medicines m LEFT JOIN suppliers s ON m.supplier_id = s.supplier_id";
-
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)){
-            while (resultSet.next()) {
-                tableModel.addRow(new Object[]{
-                        resultSet.getInt("medicine_id"),
-                        resultSet.getString("medicine_name"),
-                        resultSet.getString("category"),
-                        resultSet.getString("supplier_name"),
-                        resultSet.getInt("quantity"),
-                        resultSet.getDouble("price"),
-                        resultSet.getDate("expiry_date"),
-                        resultSet.getInt("reorder_level")
-                });
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Could not load medicines from the database.", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // ---------------------------------------------------------
-    // LOAD SUPPLIERS INTO MEDICINE DROPDOWN
-    // ---------------------------------------------------------
-    private void loadSuppliersDropdown(JComboBox<String> supplierComboBox) {
-        String sql = "SELECT supplier_id, supplier_name FROM suppliers ORDER BY supplier_name";
-
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)
-        ) {
-            while (resultSet.next()) {
-                int supplierId = resultSet.getInt("supplier_id");
-                String supplierName = resultSet.getString("supplier_name");
-
-                supplierComboBox.addItem(supplierId + " - " + supplierName);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Could not load suppliers from the database.", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // ---------------------------------------------------------
-    // GET SUPPLIER ID FOR MEDICINE
-    // ---------------------------------------------------------
-    private int getSupplierForMeds(int medicineId) {
-        String sql = "SELECT supplier_id FROM medicines WHERE medicine_id = ?";
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)){
-            statement.setInt(1, medicineId);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()){
-                    return resultSet.getInt("supplier_id");
-                }
-            }
-        } catch(SQLException e) {
-            e.printStackTrace();
-        }
-
-        return -1;
-    }
-
-    // ---------------------------------------------------------
-    // SEARCH MEDICINES
-    // ---------------------------------------------------------
-    private void searchMeds(String searchText, DefaultTableModel tableModel) {
-        String sql = "SELECT m.medicine_id, m.medicine_name, m.category, s.supplier_name, m.quantity, m.price, m.expiry_date, m.reorder_level FROM medicines m LEFT JOIN suppliers s ON m.supplier_id = s.supplier_id WHERE m.medicine_name LIKE ? OR m.category LIKE ?";
-        tableModel.setRowCount(0);
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)){
-            statement.setString(1, "%" + searchText + "%");
-            statement.setString(2, "%" + searchText + "%");
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    tableModel.addRow(new Object[]{
-                            resultSet.getInt("medicine_id"),
-                            resultSet.getString("medicine_name"),
-                            resultSet.getString("category"),
-                            resultSet.getString("supplier_name"),
-                            resultSet.getInt("quantity"),
-                            resultSet.getDouble("price"),
-                            resultSet.getDate("expiry_date"),
-                            resultSet.getInt("reorder_level")
-                    });
-                }
-            }
-        } catch(SQLException e){
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Could not search medicines.", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // =========================================================
-    // PHASE 7 - SUPPLIER MANAGEMENT METHODS
-    // =========================================================
-
-    // ---------------------------------------------------------
-    // CREATE SUPPLIER MANAGEMENT PANEL
-    // ---------------------------------------------------------
-    private JPanel createSupplierPanel(String title, String description){
         JPanel panel = new JPanel(new BorderLayout());
 
         panel.setBackground(LIGHT_GREEN);
-        panel.setBorder(BorderFactory.createEmptyBorder(
-                10,
-                10,
-                10,
-                10));
-
-        // =====================================================
-        // PAGE HEADER
-        // =====================================================
-        JPanel headerPanel = new JPanel();
-
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
-        headerPanel.setBackground(LIGHT_GREEN);
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(DARK_TEXT);
-
-        JLabel descriptionLabel = new JLabel(description);
-        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 15));
-        descriptionLabel.setForeground(GREY_TEXT);
-
-        headerPanel.add(titleLabel);
-        headerPanel.add(Box.createVerticalStrut(5));
-        headerPanel.add(descriptionLabel);
-
-        // =====================================================
-        // SEARCH PANEL
-        // =====================================================
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-        topPanel.setBackground(LIGHT_GREEN);
-
-        topPanel.add(headerPanel);
-
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.setBackground(LIGHT_GREEN);
-
-        JLabel searchLabel = new JLabel("Search:");
-        JTextField searchField = new JTextField(20);
-        JButton searchButton = new JButton("Search");
-        JButton showAllButton = new JButton("Show All");
-
-        searchPanel.add(searchLabel);
-        searchPanel.add(searchField);
-        searchPanel.add(searchButton);
-        searchPanel.add(showAllButton);
-
-        topPanel.add(searchPanel);
-
-        panel.add(topPanel, BorderLayout.NORTH);
-
-        // =====================================================
-        // SUPPLIER TABLE
-        // =====================================================
-        String[] columns = {
-                "ID",
-                "Supplier Name",
-                "Contact Person",
-                "Phone",
-                "Email",
-                "Address"
-        };
-
-        DefaultTableModel tableModel = new DefaultTableModel(columns, 0);
-        JTable supplierTable = new JTable(tableModel);
-
-        loadSuppliersTable(tableModel);
-
-        supplierTable.setRowHeight(30);
-        supplierTable.setFont(new Font("Arial", Font.PLAIN, 13));
-        supplierTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        supplierTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        supplierTable.setFillsViewportHeight(true);
-
-        JScrollPane scrollPane = new JScrollPane(supplierTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER));
-
-        // =====================================================
-        // SEARCH ACTION
-        // =====================================================
-        searchButton.addActionListener(e -> {
-            searchSuppliers(searchField.getText(), tableModel);
-        });
-
-        showAllButton.addActionListener(e -> {
-            tableModel.setRowCount(0);
-            loadSuppliersTable(tableModel);
-        });
-
-        // =====================================================
-        // SUPPLIER BUTTONS
-        // =====================================================
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.setBackground(LIGHT_GREEN);
-
-        JButton addButton = new JButton("Add Supplier");
-        JButton editButton = new JButton("Edit Supplier");
-        JButton deleteButton = new JButton("Delete Supplier");
-
-        buttonPanel.add(addButton);
-        buttonPanel.add(editButton);
-        buttonPanel.add(deleteButton);
-
-        addButton.addActionListener(e -> {
-            addSupplier(tableModel);
-        });
-
-        editButton.addActionListener(e -> {
-            editSupplier(supplierTable, tableModel);
-        });
-
-        deleteButton.addActionListener(e -> {
-            deleteSupplier(supplierTable, tableModel);
-        });
-
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    // ---------------------------------------------------------
-    // ADD SUPPLIER
-    // ---------------------------------------------------------
-    private void addSupplier(DefaultTableModel tableModel) {
-        JTextField nameField = new JTextField();
-        JTextField contactField = new JTextField();
-        JTextField phoneField = new JTextField();
-        JTextField emailField = new JTextField();
-        JTextField addressField = new JTextField();
-
-        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
-
-        formPanel.add(new JLabel("Supplier Name:"));
-        formPanel.add(nameField);
-
-        formPanel.add(new JLabel("Contact Person:"));
-        formPanel.add(contactField);
-
-        formPanel.add(new JLabel("Phone:"));
-        formPanel.add(phoneField);
-
-        formPanel.add(new JLabel("Email:"));
-        formPanel.add(emailField);
-
-        formPanel.add(new JLabel("Address:"));
-        formPanel.add(addressField);
-
-        int result = JOptionPane.showConfirmDialog(
-                frame,
-                formPanel,
-                "Add Supplier",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-        );
-
-        if (result == JOptionPane.OK_OPTION) {
-            String sql = "INSERT INTO suppliers (supplier_name, contact_person, phone, email, address) VALUES (?, ?, ?, ?, ?)";
-
-            try (Connection connection = DatabaseConnection.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sql)){
-
-                statement.setString(1, nameField.getText());
-                statement.setString(2, contactField.getText());
-                statement.setString(3, phoneField.getText());
-                statement.setString(4, emailField.getText());
-                statement.setString(5, addressField.getText());
-
-                statement.executeUpdate();
-
-                JOptionPane.showMessageDialog(frame, "Supplier added successfully.");
-
-                tableModel.setRowCount(0);
-                loadSuppliersTable(tableModel);
-
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(frame, "Could not add supplier.\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    // ---------------------------------------------------------
-    // EDIT SUPPLIER
-    // ---------------------------------------------------------
-    private void editSupplier(JTable supplierTable, DefaultTableModel tableModel) {
-        int selectedRow = supplierTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(frame, "Please select a supplier to edit.");
-            return;
-        }
-
-        int supplierId = (int) tableModel.getValueAt(selectedRow, 0);
-
-        JTextField nameField = new JTextField(tableModel.getValueAt(selectedRow, 1).toString());
-        JTextField contactField = new JTextField(tableModel.getValueAt(selectedRow, 2).toString());
-        JTextField phoneField = new JTextField(tableModel.getValueAt(selectedRow, 3).toString());
-        JTextField emailField = new JTextField(tableModel.getValueAt(selectedRow, 4).toString());
-        JTextField addressField = new JTextField(tableModel.getValueAt(selectedRow, 5).toString());
-
-        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
-
-        formPanel.add(new JLabel("Supplier Name:"));
-        formPanel.add(nameField);
-
-        formPanel.add(new JLabel("Contact Person:"));
-        formPanel.add(contactField);
-
-        formPanel.add(new JLabel("Phone:"));
-        formPanel.add(phoneField);
-
-        formPanel.add(new JLabel("Email:"));
-        formPanel.add(emailField);
-
-        formPanel.add(new JLabel("Address:"));
-        formPanel.add(addressField);
-
-        int result = JOptionPane.showConfirmDialog(
-                frame,
-                formPanel,
-                "Edit Supplier",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-        );
-
-        if (result == JOptionPane.OK_OPTION) {
-            String sql = "UPDATE suppliers SET supplier_name = ?, contact_person = ?, phone = ?, email = ?, address = ? WHERE supplier_id = ?";
-
-            try (Connection connection = DatabaseConnection.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sql)){
-
-                statement.setString(1, nameField.getText());
-                statement.setString(2, contactField.getText());
-                statement.setString(3, phoneField.getText());
-                statement.setString(4, emailField.getText());
-                statement.setString(5, addressField.getText());
-                statement.setInt(6, supplierId);
-
-                statement.executeUpdate();
-
-                JOptionPane.showMessageDialog(frame, "Supplier updated successfully.");
-
-                tableModel.setRowCount(0);
-                loadSuppliersTable(tableModel);
-
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(frame, "Could not update supplier.\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    // ---------------------------------------------------------
-    // DELETE SUPPLIER
-    // ---------------------------------------------------------
-    private void deleteSupplier(JTable supplierTable, DefaultTableModel tableModel) {
-        int selectedRow = supplierTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(frame, "Please select a supplier to delete.");
-            return;
-        }
-
-        int supplierId = (int) tableModel.getValueAt(selectedRow, 0);
-        String supplierName = tableModel.getValueAt(selectedRow, 1).toString();
-
-        int choice = JOptionPane.showConfirmDialog(
-                frame,
-                "Are you sure you want to delete " + supplierName + "?",
-                "Delete Supplier",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        if (choice == JOptionPane.YES_OPTION) {
-            String sql = "DELETE FROM suppliers WHERE supplier_id = ?";
-
-            try (Connection connection = DatabaseConnection.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sql)){
-
-                statement.setInt(1, supplierId);
-                statement.executeUpdate();
-
-                JOptionPane.showMessageDialog(frame, "Supplier deleted successfully.");
-
-                tableModel.setRowCount(0);
-                loadSuppliersTable(tableModel);
-
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(frame, "Could not delete supplier.\nThis supplier may still be linked to medicines.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    // ---------------------------------------------------------
-    // LOAD SUPPLIERS TABLE
-    // ---------------------------------------------------------
-    private void loadSuppliersTable(DefaultTableModel tableModel) {
-        String sql = "SELECT supplier_id, supplier_name, contact_person, phone, email, address FROM suppliers ORDER BY supplier_name";
-
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)
-        ) {
-            while (resultSet.next()) {
-                tableModel.addRow(new Object[]{
-                        resultSet.getInt("supplier_id"),
-                        resultSet.getString("supplier_name"),
-                        resultSet.getString("contact_person"),
-                        resultSet.getString("phone"),
-                        resultSet.getString("email"),
-                        resultSet.getString("address")
-                });
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Could not load suppliers from the database.", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // ---------------------------------------------------------
-    // SEARCH SUPPLIERS
-    // ---------------------------------------------------------
-    private void searchSuppliers(String searchText, DefaultTableModel tableModel) {
-        String sql = "SELECT supplier_id, supplier_name, contact_person, phone, email, address FROM suppliers WHERE supplier_name LIKE ? OR contact_person LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY supplier_name";
-
-        tableModel.setRowCount(0);
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)){
-
-            statement.setString(1, "%" + searchText + "%");
-            statement.setString(2, "%" + searchText + "%");
-            statement.setString(3, "%" + searchText + "%");
-            statement.setString(4, "%" + searchText + "%");
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    tableModel.addRow(new Object[]{
-                            resultSet.getInt("supplier_id"),
-                            resultSet.getString("supplier_name"),
-                            resultSet.getString("contact_person"),
-                            resultSet.getString("phone"),
-                            resultSet.getString("email"),
-                            resultSet.getString("address")
-                    });
-                }
-            }
-        } catch(SQLException e){
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(frame, "Could not search suppliers.", "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // =========================================================
-    // OTHER PAGE METHODS
-    // =========================================================
-
-    // ---------------------------------------------------------
-    // CREATE PLACEHOLDER PAGE
-    // ---------------------------------------------------------
-    private JPanel createPlaceholderPanel(String title,String description){
-        JPanel panel = new JPanel(new BorderLayout());
-
-        panel.setBackground(LIGHT_GREEN);
-        panel.setBorder(BorderFactory.createEmptyBorder(
-                10,
-                10,
-                10,
-                10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JLabel titleLabel = new JLabel(title);
 
@@ -1280,6 +510,7 @@ public class Dashboard {
         titleLabel.setForeground(DARK_TEXT);
 
         JLabel descriptionLabel = new JLabel(description);
+
         descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 15));
         descriptionLabel.setForeground(GREY_TEXT);
 
@@ -1297,79 +528,87 @@ public class Dashboard {
         return panel;
     }
 
-    // =========================================================
-    // NAVIGATION METHODS
-    // =========================================================
-
-    // ---------------------------------------------------------
-    // CHANGE MIDDLE CONTENT
-    // ---------------------------------------------------------
-    private void showContent(JPanel contentPanel, JPanel newPanel){
+    // 11. NAVIGATION METHOD
+    private void showContent(JPanel contentPanel, JPanel newPanel) {
         contentPanel.removeAll();
+
         contentPanel.add(newPanel, BorderLayout.CENTER);
+
         contentPanel.revalidate();
         contentPanel.repaint();
     }
 
-    // =========================================================
-    // DATABASE METHODS
-    // =========================================================
+    // 12. DATABASE METHODS
 
-    // ---------------------------------------------------------
     // GET COUNT FROM DATABASE
-    // ---------------------------------------------------------
     private int getCount(String tableName) {
         String sql = "SELECT COUNT(*) FROM " + tableName;
 
         try (Connection connection = DatabaseConnection.getConnection();
              Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)){
+             ResultSet resultSet = statement.executeQuery(sql)
+        ){
             if (resultSet.next()) {
                 return resultSet.getInt(1);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return 0;
     }
 
-    // ---------------------------------------------------------
     // GET TOTAL SALES
-    // ---------------------------------------------------------
     private double getTotalSales() {
 
         String sql = "SELECT COALESCE(SUM(total_amount), 0) FROM sales";
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)){
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)){
             if (resultSet.next()) {
                 return resultSet.getDouble(1);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return 0;
     }
 
-    // ---------------------------------------------------------
+    // GET TODAY'S SALES
+    private double getTodaySales() {
+
+        String sql = "SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE DATE(sale_date) = CURDATE()";
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)){
+            if (resultSet.next()) {
+                return resultSet.getDouble(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     // GET LOW STOCK COUNT
-    // ---------------------------------------------------------
     private int getLowStockCount() {
+
         String sql = "SELECT COUNT(*) FROM medicines " + "WHERE quantity <= reorder_level";
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)){
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)){
+
             if (resultSet.next()) {
                 return resultSet.getInt(1);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return 0;
     }
 }
