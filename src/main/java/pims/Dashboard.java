@@ -26,7 +26,7 @@ public class Dashboard {
         // CREATE WINDOW
         frame = new JFrame("HealthFirst Pharmacy");
 
-        frame.setSize(1000, 650);
+        frame.setSize(1000, 800);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
 
@@ -129,15 +129,11 @@ public class Dashboard {
 
     // 5. SIDEBAR
     private JPanel createSidebar(
-            String role,
-            String username,
-            JPanel pagePanel,
-            SupplierManagement supplierManagement,
+            String role, String username,
+            JPanel pagePanel, SupplierManagement supplierManagement,
             MedicineManagement medicineManagement,
-            UserManagement userManagement,
-            PointOfSale pointOfSale,
-            SalesReport salesReport,
-            ExpiryReport expiryReport) {
+            UserManagement userManagement, PointOfSale pointOfSale,
+            SalesReport salesReport, ExpiryReport expiryReport) {
 
         JPanel sidebar = new JPanel();
 
@@ -339,9 +335,7 @@ public class Dashboard {
         dashboardContent.setBackground(LIGHT_GREEN);
 
         // STATISTICS CARDS
-        JPanel statsPanel = new JPanel(
-                new GridLayout(1, 3, 16, 0)
-        );
+        JPanel statsPanel = new JPanel(new GridLayout(1, 4, 16, 0));
 
         statsPanel.setBackground(LIGHT_GREEN);
 
@@ -353,7 +347,7 @@ public class Dashboard {
 
         JPanel salesCard = createStatCard(
                 "TOTAL SALES",
-                String.format("R%.2f", getTodaySales()),
+                String.format("R%.2f", getTotalSales()),
                 PRIMARY_GREEN
         );
 
@@ -362,10 +356,16 @@ public class Dashboard {
                 String.valueOf(getCount("suppliers")),
                 PRIMARY_GREEN
         );
+        JPanel todaySalesCard = createStatCard(
+                "TODAY'S SALES",
+                String.format("R%.2f", getTodaySales()),
+                PRIMARY_GREEN
+        );
 
         statsPanel.add(medicinesCard);
         statsPanel.add(salesCard);
         statsPanel.add(suppliersCard);
+        statsPanel.add(todaySalesCard);
 
         // ANALYTICS PANEL
         JPanel analyticsPanel = new JPanel(
@@ -378,9 +378,7 @@ public class Dashboard {
                 )
         );
 
-        JLabel analyticsTitle = new JLabel(
-                "SALES / INVENTORY ANALYTICS"
-        );
+        JLabel analyticsTitle = new JLabel("SALES / INVENTORY ANALYTICS");
 
         analyticsTitle.setFont(new Font("Arial", Font.BOLD, 16));
         analyticsTitle.setForeground(DARK_TEXT);
@@ -397,9 +395,9 @@ public class Dashboard {
         analyticsInfo.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
 
         analyticsInfo.add(new JLabel("Inventory Status: " + getCount("medicines") + " Medicines"));
-        analyticsInfo.add(new JLabel("Today's Sales: R" + String.format("%.2f", getTotalSales())));
+        analyticsInfo.add(new JLabel("Today's Sales: R" + String.format("%.2f", getTodaySales())));
         analyticsInfo.add(new JLabel("Low Stock Items: " + getLowStockCount()));
-        analyticsInfo.add(new JLabel("Active Suppliers: " + getCount("suppliers")));
+        analyticsInfo.add(new JLabel("Today's Transactions: " + getTodayTransactionCount()));
 
         analyticsPanel.add(analyticsInfo, BorderLayout.CENTER);
 
@@ -407,6 +405,8 @@ public class Dashboard {
         dashboardContent.add(statsPanel);
         dashboardContent.add(Box.createVerticalStrut(20));
         dashboardContent.add(analyticsPanel);
+        dashboardContent.add(Box.createVerticalStrut(20));
+        dashboardContent.add(createSalesGraphPanel());
 
         return dashboardContent;
     }
@@ -539,7 +539,6 @@ public class Dashboard {
     }
 
     // 12. DATABASE METHODS
-
     // GET COUNT FROM DATABASE
     private int getCount(String tableName) {
         String sql = "SELECT COUNT(*) FROM " + tableName;
@@ -562,10 +561,9 @@ public class Dashboard {
 
         String sql = "SELECT COALESCE(SUM(total_amount), 0) FROM sales";
 
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)){
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)){
             if (resultSet.next()) {
                 return resultSet.getDouble(1);
             }
@@ -580,10 +578,9 @@ public class Dashboard {
 
         String sql = "SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE DATE(sale_date) = CURDATE()";
 
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)){
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)){
             if (resultSet.next()) {
                 return resultSet.getDouble(1);
             }
@@ -598,10 +595,254 @@ public class Dashboard {
 
         String sql = "SELECT COUNT(*) FROM medicines " + "WHERE quantity <= reorder_level";
 
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)){
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)){
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // GET SALES FOR THE LAST 7 DAYS
+    private double[] getLast7DaysSales() {
+
+        double[] dailySales = new double[7];
+
+        String sql = "SELECT DATE(sale_date) AS sale_day, COALESCE(SUM(total_amount), 0) AS total_sales " +
+                "FROM sales " +
+                "WHERE sale_date >= CURDATE() - INTERVAL 6 DAY " +
+                "GROUP BY DATE(sale_date) " +
+                "ORDER BY sale_day";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+
+            while (resultSet.next()) {
+
+                Date saleDate = resultSet.getDate("sale_day");
+                double totalSales = resultSet.getDouble("total_sales");
+
+                long daysAgo = java.time.temporal.ChronoUnit.DAYS.between(
+                        saleDate.toLocalDate(),
+                        java.time.LocalDate.now()
+                );
+
+                int index = 6 - (int) daysAgo;
+
+                if (index >= 0 && index < 7) {
+                    dailySales[index] = totalSales;
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dailySales;
+    }
+
+    // CREATE 7-DAY SALES GRAPH
+    private JPanel createSalesGraphPanel() {
+
+        JPanel graphPanel = new JPanel(new BorderLayout());
+        graphPanel.setPreferredSize(new Dimension(0, 300));
+
+        graphPanel.setBackground(Color.WHITE);
+        graphPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 230, 225)),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+
+        JLabel title = new JLabel("SALES TREND - LAST 7 DAYS");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        title.setForeground(DARK_GREEN);
+
+        graphPanel.add(title, BorderLayout.NORTH);
+
+        double[] sales = getLast7DaysSales();
+
+        JPanel chart = new JPanel() {
+
+            @Override
+            protected void paintComponent(Graphics graphics) {
+
+                super.paintComponent(graphics);
+
+                Graphics2D g = (Graphics2D) graphics;
+
+                g.setRenderingHint(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON
+                );
+
+                int width = getWidth();
+                int height = getHeight();
+
+                int leftPadding = 60;
+                int rightPadding = 20;
+                int topPadding = 25;
+                int bottomPadding = 45;
+
+                int graphWidth = width - leftPadding - rightPadding;
+                int graphHeight = height - topPadding - bottomPadding;
+
+                double maxSales = 0;
+
+                for (double value : sales) {
+                    if (value > maxSales) {
+                        maxSales = value;
+                    }
+                }
+
+                if (maxSales == 0) {
+                    maxSales = 100;
+                }
+
+                // Draw horizontal grid lines
+                g.setColor(new Color(230, 235, 232));
+
+                for (int i = 0; i <= 4; i++) {
+
+                    int y = topPadding + (graphHeight * i / 4);
+
+                    g.drawLine(
+                            leftPadding,
+                            y,
+                            width - rightPadding,
+                            y
+                    );
+                }
+
+                // Draw Y-axis
+                g.setColor(Color.GRAY);
+
+                g.drawLine(
+                        leftPadding,
+                        topPadding,
+                        leftPadding,
+                        height - bottomPadding
+                );
+
+                // Draw X-axis
+                g.drawLine(
+                        leftPadding,
+                        height - bottomPadding,
+                        width - rightPadding,
+                        height - bottomPadding
+                );
+
+                // Draw Y-axis values
+                g.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+
+                for (int i = 0; i <= 4; i++) {
+
+                    double value = maxSales - (maxSales * i / 4);
+
+                    int y = topPadding + (graphHeight * i / 4);
+
+                    g.setColor(Color.DARK_GRAY);
+
+                    g.drawString(
+                            String.format("R%.0f", value),
+                            5,
+                            y + 5
+                    );
+                }
+
+                // Draw sales line
+                int previousX = 0;
+                int previousY = 0;
+
+                for (int i = 0; i < sales.length; i++) {
+
+                    int x = leftPadding +
+                            (graphWidth * i / 6);
+
+                    int y = height - bottomPadding -
+                            (int) ((sales[i] / maxSales) * graphHeight);
+
+                    // Draw line between points
+                    if (i > 0) {
+
+                        g.setColor(PRIMARY_GREEN);
+
+                        g.setStroke(new BasicStroke(3));
+
+                        g.drawLine(
+                                previousX,
+                                previousY,
+                                x,
+                                y
+                        );
+                    }
+
+                    // Draw point
+                    g.setColor(PRIMARY_GREEN);
+
+                    g.fillOval(
+                            x - 5,
+                            y - 5,
+                            10,
+                            10
+                    );
+
+                    // Draw sales amount
+                    g.setColor(Color.DARK_GRAY);
+
+                    g.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+
+                    g.drawString(
+                            String.format("R%.0f", sales[i]),
+                            x - 18,
+                            y - 10
+                    );
+
+                    previousX = x;
+                    previousY = y;
+                }
+
+                // Draw day labels
+                for (int i = 0; i < 7; i++) {
+
+                    java.time.LocalDate date =
+                            java.time.LocalDate.now().minusDays(6 - i);
+
+                    String day =
+                            date.getDayOfWeek().toString().substring(0, 3);
+
+                    int x = leftPadding +
+                            (graphWidth * i / 6);
+
+                    g.setColor(Color.DARK_GRAY);
+
+                    g.drawString(
+                            day,
+                            x - 10,
+                            height - 20
+                    );
+                }
+            }
+        };
+
+        chart.setBackground(Color.WHITE);
+        graphPanel.add(chart, BorderLayout.CENTER);
+
+        return graphPanel;
+    }
+
+    // GET TODAY'S TRANSACTION COUNT
+    private int getTodayTransactionCount() {
+
+        String sql = "SELECT COUNT(*) FROM sales WHERE DATE(sale_date) = CURDATE()";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)){
 
             if (resultSet.next()) {
                 return resultSet.getInt(1);

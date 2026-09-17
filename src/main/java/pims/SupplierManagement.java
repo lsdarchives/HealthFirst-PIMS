@@ -356,11 +356,9 @@ public class SupplierManagement {
     private void loadSuppliersTable(DefaultTableModel tableModel) {
         String sql = "SELECT supplier_id, supplier_name, contact_person, phone, email, address FROM suppliers ORDER BY supplier_name";
 
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)
-        ) {
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)){
             while (resultSet.next()) {
                 tableModel.addRow(new Object[]{
                         resultSet.getInt("supplier_id"),

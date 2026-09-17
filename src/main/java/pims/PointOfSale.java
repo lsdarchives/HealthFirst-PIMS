@@ -344,7 +344,7 @@ public class PointOfSale {
         String stockSql = "UPDATE medicines SET quantity = quantity - ? WHERE medicine_id = ? AND quantity >= ?";
 
         try (Connection connection = DatabaseConnection.getConnection()) {
-            connection.setAutoCommit(false);
+             connection.setAutoCommit(false);
             int userId;
 
             try (PreparedStatement userStatement = connection.prepareStatement(userSql)) {

@@ -451,10 +451,9 @@ public class MedicineManagement {
     private void loadSuppliersDropdown(JComboBox<String> supplierComboBox) {
         String sql = "SELECT supplier_id, supplier_name FROM suppliers ORDER BY supplier_name ASC";
 
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)
+        try (Connection connection = DatabaseConnection.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)
         ) {
             while (resultSet.next()) {
                 int supplierId = resultSet.getInt("supplier_id");
