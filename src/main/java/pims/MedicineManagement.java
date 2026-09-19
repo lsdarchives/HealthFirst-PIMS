@@ -22,9 +22,8 @@ public class MedicineManagement {
                 10,
                 10));
 
-        // =====================================================
+
         // PAGE HEADER
-        // =====================================================
         JPanel headerPanel = new JPanel();
 
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
@@ -66,9 +65,8 @@ public class MedicineManagement {
 
         panel.add(topPanel, BorderLayout.NORTH);
 
-        // =====================================================
+
         // MEDICINE TABLE
-        // =====================================================
         String[] columns = {
                 "ID",
                 "Medicine Name",
@@ -89,7 +87,7 @@ public class MedicineManagement {
             searchMeds(searchField.getText(), tableModel);
         });
 
-        // Show all
+        // SHOW ALL
         showAllButton.addActionListener(e -> {
             tableModel.setRowCount(0);
             loadMedicinesTable(tableModel);
@@ -101,7 +99,7 @@ public class MedicineManagement {
         medicineTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         medicineTable.setFillsViewportHeight(true);
 
-        // Low stock highlighter
+        // LOW-STOCK HIGHLIGHTER
         medicineTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -150,10 +148,10 @@ public class MedicineManagement {
 
         scrollPane.setBorder(BorderFactory.createLineBorder(Dashboard.BORDER));
 
-        // =====================================================
+
         // MEDICINE BUTTONS
-        // =====================================================
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
         buttonPanel.setBackground(Dashboard.LIGHT_GREEN);
 
         JButton addButton = new JButton("Add Medicine");
@@ -205,9 +203,7 @@ public class MedicineManagement {
         return panel;
     }
 
-    // ---------------------------------------------------------
     // ADD MEDICINE
-    // ---------------------------------------------------------
     private void addMedicine(DefaultTableModel tableModel) {
         JTextField name = new JTextField();
         JTextField category= new JTextField();
@@ -280,9 +276,7 @@ public class MedicineManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // EDIT MEDICINE
-    // ---------------------------------------------------------
     private void editMedicine(JTable medicineTable, DefaultTableModel tableModel) {
         int selectedRow = medicineTable.getSelectedRow();
 
@@ -377,9 +371,8 @@ public class MedicineManagement {
             }
         }
     }
-    // ---------------------------------------------------------
+
     // DELETE MEDICINE
-    // ---------------------------------------------------------
     private void deleteMedicine(JTable medicineTable, DefaultTableModel tableModel) {
         int selectedRow = medicineTable.getSelectedRow();
 
@@ -417,9 +410,7 @@ public class MedicineManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // LOAD MEDICINES TABLE
-    // ---------------------------------------------------------
     private void loadMedicinesTable(DefaultTableModel tableModel) {
         String sql = "SELECT m.medicine_id, m.medicine_name, m.category, s.supplier_name, m.quantity, m.price, m.expiry_date, m.reorder_level FROM medicines m LEFT JOIN suppliers s ON m.supplier_id = s.supplier_id";
 
@@ -445,9 +436,7 @@ public class MedicineManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // LOAD SUPPLIERS INTO MEDICINE DROPDOWN
-    // ---------------------------------------------------------
     private void loadSuppliersDropdown(JComboBox<String> supplierComboBox) {
         String sql = "SELECT supplier_id, supplier_name FROM suppliers ORDER BY supplier_name ASC";
 
@@ -467,9 +456,7 @@ public class MedicineManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // GET SUPPLIER ID FOR MEDICINE
-    // ---------------------------------------------------------
     private int getSupplierForMeds(int medicineId) {
         String sql = "SELECT supplier_id FROM medicines WHERE medicine_id = ?";
 
@@ -489,9 +476,7 @@ public class MedicineManagement {
         return -1;
     }
 
-    // ---------------------------------------------------------
     // SEARCH MEDICINES
-    // ---------------------------------------------------------
     private void searchMeds(String searchText, DefaultTableModel tableModel) {
         String sql = "SELECT m.medicine_id, m.medicine_name, m.category, s.supplier_name, m.quantity, m.price, m.expiry_date, m.reorder_level FROM medicines m LEFT JOIN suppliers s ON m.supplier_id = s.supplier_id WHERE m.medicine_name LIKE ? OR m.category LIKE ?";
         tableModel.setRowCount(0);

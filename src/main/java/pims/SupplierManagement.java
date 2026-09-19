@@ -179,9 +179,7 @@ public class SupplierManagement {
 
         return panel;
     }
-    // ---------------------------------------------------------
     // ADD SUPPLIER
-    // ---------------------------------------------------------
     private void addSupplier(DefaultTableModel tableModel) {
         JTextField nameField = new JTextField();
         JTextField contactField = new JTextField();
@@ -239,9 +237,7 @@ public class SupplierManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // EDIT SUPPLIER
-    // ---------------------------------------------------------
     private void editSupplier(JTable supplierTable, DefaultTableModel tableModel) {
         int selectedRow = supplierTable.getSelectedRow();
 
@@ -309,9 +305,7 @@ public class SupplierManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // DELETE SUPPLIER
-    // ---------------------------------------------------------
     private void deleteSupplier(JTable supplierTable, DefaultTableModel tableModel) {
         int selectedRow = supplierTable.getSelectedRow();
 
@@ -350,9 +344,7 @@ public class SupplierManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // LOAD SUPPLIERS TABLE
-    // ---------------------------------------------------------
     private void loadSuppliersTable(DefaultTableModel tableModel) {
         String sql = "SELECT supplier_id, supplier_name, contact_person, phone, email, address FROM suppliers ORDER BY supplier_name";
 
@@ -375,9 +367,7 @@ public class SupplierManagement {
         }
     }
 
-    // ---------------------------------------------------------
     // SEARCH SUPPLIERS
-    // ---------------------------------------------------------
     private void searchSuppliers(String searchText, DefaultTableModel tableModel) {
         String sql = "SELECT supplier_id, supplier_name, contact_person, phone, email, address FROM suppliers WHERE supplier_name LIKE ? OR contact_person LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY supplier_name";
 

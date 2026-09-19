@@ -476,9 +476,7 @@ public class UserManagement {
                 10
         ));
 
-        // =====================================================
         // PAGE HEADER
-        // =====================================================
         JPanel headerPanel = new JPanel();
 
         headerPanel.setLayout(
@@ -510,9 +508,7 @@ public class UserManagement {
         headerPanel.add(Box.createVerticalStrut(5));
         headerPanel.add(descriptionLabel);
 
-        // =====================================================
         // SEARCH PANEL
-        // =====================================================
         JPanel searchPanel =
                 new JPanel(new FlowLayout(FlowLayout.LEFT));
 
@@ -558,9 +554,7 @@ public class UserManagement {
                 BorderLayout.NORTH
         );
 
-        // =====================================================
         // USER TABLE
-        // =====================================================
         String[] columns = {
                 "ID",
                 "Username",
@@ -577,142 +571,78 @@ public class UserManagement {
         loadUsersTable(tableModel);
 
         userTable.setRowHeight(30);
+        userTable.setFont(new Font("Arial", Font.PLAIN, 13));
 
-        userTable.setFont(
-                new Font("Arial", Font.PLAIN, 13)
-        );
+        userTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
 
-        userTable.getTableHeader().setFont(
-                new Font("Arial", Font.BOLD, 13)
-        );
-
-        userTable.setSelectionMode(
-                ListSelectionModel.SINGLE_SELECTION
-        );
-
+        userTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         userTable.setFillsViewportHeight(true);
 
-        JScrollPane scrollPane =
-                new JScrollPane(userTable);
+        JScrollPane scrollPane = new JScrollPane(userTable);
 
-        // =====================================================
+
         // SELECTED USER DETAILS
-        // =====================================================
         JPanel detailsPanel = new JPanel();
 
-        detailsPanel.setLayout(
-                new GridLayout(1, 4, 10, 10)
-        );
+        detailsPanel.setLayout(new GridLayout(1, 4, 10, 10));
+        detailsPanel.setBackground(Dashboard.WHITE);
+        detailsPanel.setBorder(BorderFactory.createTitledBorder("Selected User Details"));
 
-        detailsPanel.setBackground(
-                Dashboard.WHITE
-        );
-
-        detailsPanel.setBorder(
-                BorderFactory.createTitledBorder(
-                        "Selected User Details"
-                )
-        );
-
-        JLabel detailsId =
-                new JLabel("ID: ");
-
-        JLabel detailsUsername =
-                new JLabel("Username: ");
-
-        JLabel detailsRole =
-                new JLabel("Role: ");
-
-        JLabel detailsStatus =
-                new JLabel("Status: ");
+        JLabel detailsId = new JLabel("ID: ");
+        JLabel detailsUsername = new JLabel("Username: ");
+        JLabel detailsRole = new JLabel("Role: ");
+        JLabel detailsStatus = new JLabel("Status: ");
 
         detailsPanel.add(detailsId);
         detailsPanel.add(detailsUsername);
         detailsPanel.add(detailsRole);
         detailsPanel.add(detailsStatus);
 
-        scrollPane.setBorder(
-                BorderFactory.createLineBorder(
-                        Dashboard.BORDER
-                )
-        );
+        scrollPane.setBorder(BorderFactory.createLineBorder(Dashboard.BORDER));
 
-        // =====================================================
         // SEARCH ACTION
-        // =====================================================
         searchButton.addActionListener(e -> {
-            searchUsers(
-                    searchField.getText(),
-                    tableModel
-            );
+            searchUsers(searchField.getText(), tableModel);
         });
 
         showAllButton.addActionListener(e -> {
-
             tableModel.setRowCount(0);
-
             loadUsersTable(tableModel);
         });
 
-        // =====================================================
         // USER BUTTONS
-        // =====================================================
-        JPanel buttonPanel =
-                new JPanel(
-                        new FlowLayout(FlowLayout.LEFT)
-                );
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        buttonPanel.setBackground(
-                Dashboard.LIGHT_GREEN
-        );
+        buttonPanel.setBackground(Dashboard.LIGHT_GREEN);
 
-        JButton addButton =
-                new JButton("Add User");
-
-        JButton editButton =
-                new JButton("Edit User");
-
-        JButton toggleStatusButton =
-                new JButton("Activate / Deactivate");
-
-        JButton deleteButton =
-                new JButton("Delete User");
+        JButton addButton = new JButton("Add User");
+        JButton editButton = new JButton("Edit User");
+        JButton toggleStatusButton = new JButton("Activate / Deactivate");
+        JButton deleteButton = new JButton("Delete User");
 
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(toggleStatusButton);
         buttonPanel.add(deleteButton);
 
-        // =====================================================
         // ADD USER BUTTON
-        // =====================================================
         addButton.addActionListener(e -> {
             addUser(tableModel);
         });
 
-        // =====================================================
+
         // EDIT USER BUTTON
-        // =====================================================
         editButton.addActionListener(e -> {
-            editUser(
-                    userTable,
-                    tableModel
-            );
+            editUser(userTable, tableModel);
         });
 
-        // =====================================================
+
         // ACTIVATE / DEACTIVATE BUTTON
-        // =====================================================
         toggleStatusButton.addActionListener(e -> {
-            toggleUserStatus(
-                    userTable,
-                    tableModel
-            );
+            toggleUserStatus(userTable, tableModel);
         });
 
-        // =====================================================
         // DELETE USER BUTTON
-        // =====================================================
         deleteButton.addActionListener(e -> {
             deleteUser(
                     userTable,
@@ -720,41 +650,18 @@ public class UserManagement {
             );
         });
 
-        // =====================================================
+
         // TABLE + DETAILS
-        // =====================================================
-        JPanel tableAndDetailsPanel =
-                new JPanel(
-                        new BorderLayout(10, 10)
-                );
+        JPanel tableAndDetailsPanel = new JPanel(new BorderLayout(10, 10));
 
-        tableAndDetailsPanel.setBackground(
-                Dashboard.LIGHT_GREEN
-        );
+        tableAndDetailsPanel.setBackground(Dashboard.LIGHT_GREEN);
+        tableAndDetailsPanel.add(scrollPane, BorderLayout.CENTER);
+        tableAndDetailsPanel.add(detailsPanel, BorderLayout.SOUTH);
 
-        tableAndDetailsPanel.add(
-                scrollPane,
-                BorderLayout.CENTER
-        );
+        panel.add(tableAndDetailsPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
 
-        tableAndDetailsPanel.add(
-                detailsPanel,
-                BorderLayout.SOUTH
-        );
-
-        panel.add(
-                tableAndDetailsPanel,
-                BorderLayout.CENTER
-        );
-
-        panel.add(
-                buttonPanel,
-                BorderLayout.SOUTH
-        );
-
-        // =====================================================
         // SELECTED USER
-        // =====================================================
         userTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && userTable.getSelectedRow() != -1) {
 
